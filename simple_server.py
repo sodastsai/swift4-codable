@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import json
 import os
 from wsgiref.simple_server import make_server
@@ -7,17 +5,18 @@ from wsgiref.simple_server import make_server
 
 def simple_app(environ, start_response):
     try:
-        req_length = int(environ.get("CONTENT_LENGTH", 0))
-        input_data = json.loads(environ["wsgi.input"].read(req_length))
+        payload_length = int(environ.get("CONTENT_LENGTH") or 0)
+        input_payload = environ["wsgi.input"].read(payload_length)
+        input_data = json.loads(input_payload) if input_payload else None
         status = "200 OK"
-    except ValueError:
+    except ValueError as e:
         input_data = {"error": "Cannot parse content."}
         status = "400 BAD REQUEST"
     headers = [
         ("Content-type", "application/json"),
     ]
     start_response(status, headers)
-    return [json.dumps(input_data, indent=2)]
+    return [json.dumps(input_data, indent=2).encode("utf-8")]
 
 
 def main():
